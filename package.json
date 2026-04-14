@@ -11,10 +11,15 @@
   "dependencies": {
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.45.4",
+    "@types/three": "^0.183.1",
     "canvas-confetti": "^1.9.3",
+    "clsx": "^2.1.1",
     "next": "14.2.35",
+    "next-themes": "^0.4.6",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "tailwind-merge": "^3.5.0",
+    "three": "^0.183.2"
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.6.4",

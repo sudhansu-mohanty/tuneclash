@@ -1,10 +1,10 @@
 import type { Entry } from "@/lib/types";
 
-const CATEGORY_COLORS: Record<string, string> = {
-  music: "bg-accent",
-  movies: "bg-accent-blue",
-  games: "bg-accent-green",
-  books: "bg-accent-yellow text-zinc-900",
+const CATEGORY_STYLES: Record<string, { color: string; icon: string }> = {
+  music:  { color: "#C97B84", icon: "music_note" },
+  movies: { color: "#6B8CAE", icon: "movie" },
+  games:  { color: "#7AAE8C", icon: "sports_esports" },
+  books:  { color: "#C4A882", icon: "menu_book" },
 };
 
 interface Props {
@@ -12,22 +12,67 @@ interface Props {
 }
 
 export default function RevealCard({ entry }: Props) {
-  const badgeClass =
-    CATEGORY_COLORS[entry.category.toLowerCase()] ?? "bg-zinc-600";
+  const style = CATEGORY_STYLES[entry.category.toLowerCase()] ?? { color: "#888888", icon: "star" };
 
   return (
-    <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-8 flex flex-col items-center gap-4 text-center w-full max-w-md mx-auto">
-      <span
-        className={`text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full ${badgeClass}`}
-      >
-        {entry.category}
-      </span>
-      <h2 className="font-syne text-3xl font-extrabold text-white leading-tight">
-        {entry.title}
-      </h2>
-      {entry.creator && (
-        <p className="text-zinc-400 text-lg">{entry.creator}</p>
-      )}
+    <div
+      className="w-full rounded-2xl overflow-hidden"
+      style={{
+        background: "#1A1A1A",
+        border: `1px solid ${style.color}35`,
+        boxShadow: `0 0 48px ${style.color}12, 0 0 0 1px ${style.color}20`,
+      }}
+    >
+      {/* Colored top strip */}
+      <div style={{ height: "3px", background: `linear-gradient(to right, ${style.color}, ${style.color}50)` }} />
+
+      <div className="flex flex-col items-center justify-center p-8 text-center gap-6">
+
+        {/* Icon in circle */}
+        <div
+          className="w-14 h-14 rounded-full flex items-center justify-center"
+          style={{ background: style.color + "20", border: `1px solid ${style.color}40` }}
+        >
+          <span
+            className="material-symbols-outlined"
+            style={{ fontSize: "26px", color: style.color, fontVariationSettings: "'FILL' 1" }}
+          >
+            {style.icon}
+          </span>
+        </div>
+
+        {/* Title */}
+        <div className="space-y-2">
+          <h2 className="font-syne text-[1.75rem] sm:text-[2rem] font-bold tracking-tight text-[#F0F0F0] leading-tight">
+            {entry.title}
+          </h2>
+          {entry.creator && (
+            <p className="text-[#555] text-sm">by {entry.creator}</p>
+          )}
+        </div>
+
+        {/* Divider with label */}
+        <div className="flex items-center gap-3 w-full">
+          <div className="flex-1 h-px" style={{ background: style.color + "25" }} />
+          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: style.color + "80" }}>
+            Whose fave?
+          </span>
+          <div className="flex-1 h-px" style={{ background: style.color + "25" }} />
+        </div>
+
+        {/* Category badge */}
+        <span
+          className="text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full"
+          style={{
+            color: style.color,
+            background: style.color + "15",
+            border: `1px solid ${style.color}35`,
+          }}
+        >
+          {entry.category}
+        </span>
+
+      </div>
     </div>
   );
 }

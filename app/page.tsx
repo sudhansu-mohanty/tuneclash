@@ -3,38 +3,39 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createRoom, joinRoom } from "@/lib/supabase";
+import { DottedSurface } from "@/components/ui/dotted-surface";
 
 const CATEGORIES = [
-  { id: "music",  label: "Music",  icon: "♫", hover: "hover:border-accent hover:bg-accent/10 hover:text-accent",             active: "border-accent bg-accent/10 text-accent" },
-  { id: "movies", label: "Movies", icon: "▶", hover: "hover:border-accent-blue hover:bg-accent-blue/10 hover:text-accent-blue", active: "border-accent-blue bg-accent-blue/10 text-accent-blue" },
-  { id: "games",  label: "Games",  icon: "◈", hover: "hover:border-accent-green hover:bg-accent-green/10 hover:text-accent-green", active: "border-accent-green bg-accent-green/10 text-accent-green" },
-  { id: "books",  label: "Books",  icon: "◉", hover: "hover:border-accent-yellow hover:bg-accent-yellow/10 hover:text-accent-yellow", active: "border-accent-yellow bg-accent-yellow/10 text-accent-yellow" },
+  { id: "music",  label: "Music",  icon: "music_note",      color: "#C97B84" },
+  { id: "movies", label: "Movies", icon: "movie",            color: "#6B8CAE" },
+  { id: "games",  label: "Games",  icon: "sports_esports",   color: "#7AAE8C" },
+  { id: "books",  label: "Books",  icon: "menu_book",        color: "#C4A882" },
 ];
 
 export default function HomePage() {
   const router = useRouter();
-  const [selected, setSelected] = useState<string | null>(null);
-  const [name, setName] = useState("");
+  const [tab, setTab]           = useState<"create" | "join">("create");
+  const [name, setName]         = useState("");
   const [joinCode, setJoinCode] = useState("");
-  const [tab, setTab] = useState<"create" | "join">("create");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState<string | null>(null);
 
   async function handleGo() {
     if (!name.trim()) return setError("Enter your name");
     if (tab === "join" && joinCode.trim().length !== 4) return setError("Enter a 4-letter room code");
-    if (!selected) return setError("Pick a category first");
+    if (tab === "create" && !selected) return setError("Pick a category first");
     setError(null);
     setLoading(true);
     try {
       if (tab === "create") {
-        const room = await createRoom(name.trim(), selected);
+        const room = await createRoom(name.trim(), selected!);
         await joinRoom(room.code, name.trim());
         sessionStorage.setItem("playerName", name.trim());
         sessionStorage.setItem("hostCode", room.code);
         router.push(`/room/${room.code}`);
       } else {
-        const { room, player } = await joinRoom(joinCode.trim(), name.trim());
+        const { room, player } = await joinRoom(joinCode.trim().toUpperCase(), name.trim());
         sessionStorage.setItem("playerName", name.trim());
         sessionStorage.setItem("playerId", player.id);
         router.push(`/room/${room.code}`);
@@ -46,118 +47,183 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col divide-y divide-zinc-800/60">
+    <div className="min-h-screen bg-[#111111] flex flex-col">
+      <DottedSurface />
 
-      {/* ── Section 1: What it is ── */}
-      <section className="flex flex-col items-center justify-center text-center px-6 py-28">
-        <p className="text-xs font-syne tracking-[0.25em] uppercase text-zinc-600 mb-5">
-          real-time · multiplayer · icebreaker
-        </p>
-        <h1 className="font-syne text-6xl sm:text-8xl font-extrabold tracking-tight text-white leading-none">
-          Tune<span className="text-accent">Clash</span>
-        </h1>
-        <p className="mt-6 text-zinc-400 text-lg sm:text-xl max-w-lg leading-relaxed">
-          Everyone submits their favourite picks. A roulette wheel reveals them
-          one by one. Vote if you share the taste — find out who vibes with you.
-        </p>
-        <div className="mt-12 flex items-center gap-6 sm:gap-10">
-          <Step n="1" label="Drop your picks" />
-          <div className="w-8 h-px bg-zinc-800" />
-          <Step n="2" label="Spin the wheel" />
-          <div className="w-8 h-px bg-zinc-800" />
-          <Step n="3" label="Vote & match" />
-        </div>
-      </section>
+      {/* Header */}
+      <header className="fixed top-0 w-full z-50 px-6 h-16 flex items-center justify-between">
+        <span className="font-syne text-lg font-bold tracking-tighter text-[#F0F0F0] uppercase">
+          TuneClash
+        </span>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-[#555] border border-[#2A2A2A] px-3 py-1.5 rounded-full">
+          Party Game
+        </span>
+      </header>
 
-      {/* ── Section 2: Pick category + start ── */}
-      <section className="flex flex-col items-center px-6 py-20 gap-10">
-        <div className="text-center">
-          <h2 className="font-syne text-2xl sm:text-3xl font-bold text-white">
-            What are you clashing on?
-          </h2>
-          <p className="text-zinc-600 text-sm mt-1">Pick a category to get started</p>
-        </div>
+      <main className="flex-1 pt-20 pb-16 px-6 max-w-[480px] mx-auto w-full flex flex-col gap-8">
 
-        {/* Category grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-2xl">
-          {CATEGORIES.map((cat) => (
+        {/* Hero */}
+        <section className="pt-8 animate-fade-up">
+          <div className="inline-flex items-center gap-2 mb-5 px-3 py-1.5 rounded-full border border-[#2A2A2A] bg-[#1C1B1B]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#7AAE8C]" style={{ animation: "pulse-dot 2s infinite" }} />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#888888]">
+              No account needed
+            </span>
+          </div>
+
+          <h1 className="font-syne text-[3.75rem] sm:text-[5rem] leading-[0.88] font-bold tracking-tight">
+            <span className="text-[#F0F0F0]">Your taste.</span><br />
+            <span className="text-[#E8FF47]">Exposed.</span>
+          </h1>
+
+          <p className="mt-5 text-[#555] text-sm leading-relaxed max-w-xs">
+            Submit your favourite. Your friends guess whose it is.
+            Score points for bluffing them.
+          </p>
+        </section>
+
+        {/* Pill toggle */}
+        <div className="animate-fade-up-delay-1">
+          <div className="flex bg-[#1C1B1B] rounded-full p-1 border border-[#2A2A2A] w-fit">
             <button
-              key={cat.id}
-              onClick={() => { setSelected(cat.id); setError(null); }}
-              className={`flex flex-col items-center gap-3 py-8 rounded-2xl border-2 transition-all duration-150 font-syne font-bold text-sm
-                ${selected === cat.id
-                  ? cat.active
-                  : `border-zinc-800 bg-zinc-900/50 text-zinc-500 ${cat.hover}`}`}
+              onClick={() => { setTab("create"); setError(null); }}
+              className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all duration-200 ${
+                tab === "create"
+                  ? "bg-[#E8FF47] text-[#2D3400]"
+                  : "text-[#555] hover:text-[#F0F0F0]"
+              }`}
             >
-              <span className="text-3xl">{cat.icon}</span>
-              {cat.label}
+              Create Room
             </button>
-          ))}
-        </div>
-
-        {/* Name + create/join — slides in after category is picked */}
-        {selected && (
-          <div className="w-full max-w-sm flex flex-col gap-4">
-            {/* Tab */}
-            <div className="flex rounded-xl overflow-hidden border border-zinc-800">
-              {(["create", "join"] as const).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => { setTab(t); setError(null); }}
-                  className={`flex-1 py-2.5 text-sm font-syne font-bold transition-colors
-                    ${tab === t ? "bg-zinc-800 text-white" : "text-zinc-500 hover:text-zinc-300"}`}
-                >
-                  {t === "create" ? "Create room" : "Join room"}
-                </button>
-              ))}
-            </div>
-
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleGo()}
-              placeholder="Your name"
-              maxLength={24}
-              className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-600 transition-colors"
-            />
-
-            {tab === "join" && (
-              <input
-                type="text"
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value.toUpperCase().slice(0, 4))}
-                onKeyDown={(e) => e.key === "Enter" && handleGo()}
-                placeholder="Room code · ABCD"
-                maxLength={4}
-                className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white placeholder-zinc-600 font-syne font-bold tracking-[0.3em] text-center text-lg uppercase focus:outline-none focus:border-zinc-600 transition-colors"
-              />
-            )}
-
-            {error && <p className="text-red-400 text-sm text-center">{error}</p>}
-
             <button
-              onClick={handleGo}
-              disabled={loading}
-              className="w-full bg-accent hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-syne font-bold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2"
+              onClick={() => { setTab("join"); setError(null); }}
+              className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all duration-200 ${
+                tab === "join"
+                  ? "bg-[#E8FF47] text-[#2D3400]"
+                  : "text-[#555] hover:text-[#F0F0F0]"
+              }`}
             >
-              {loading ? <Spinner /> : tab === "create" ? "Create room →" : "Join →"}
+              Join Room
             </button>
           </div>
-        )}
-      </section>
+        </div>
 
-    </main>
-  );
-}
+        {/* Form card */}
+        <section className="animate-fade-up-delay-2">
+          <div
+            className="rounded-2xl border border-[#2A2A2A] overflow-hidden"
+            style={{ background: "#191919", borderTop: "2px solid rgba(232,255,71,0.18)" }}
+          >
+            <div className="p-6 space-y-5">
 
-function Step({ n, label }: { n: string; label: string }) {
-  return (
-    <div className="flex flex-col items-center gap-2">
-      <span className="w-8 h-8 rounded-full border border-zinc-800 text-zinc-600 text-xs font-syne font-bold flex items-center justify-center">
-        {n}
-      </span>
-      <span className="text-zinc-600 text-xs whitespace-nowrap">{label}</span>
+              {/* Name */}
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-[#555] mb-2">
+                  Your Name
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleGo()}
+                  placeholder="What should we call you?"
+                  maxLength={24}
+                  className="w-full bg-[#111111] border border-[#2A2A2A] rounded-xl px-4 py-3.5 text-[#F0F0F0] placeholder-[#383838] focus:outline-none focus:border-[#E8FF47]/30 transition-all text-sm"
+                />
+              </div>
+
+              {/* Join code */}
+              {tab === "join" && (
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-[#555] mb-2">
+                    Room Code
+                  </label>
+                  <input
+                    type="text"
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value.toUpperCase().slice(0, 4))}
+                    onKeyDown={(e) => e.key === "Enter" && handleGo()}
+                    placeholder="ABCD"
+                    maxLength={4}
+                    className="w-full bg-[#111111] border border-[#2A2A2A] rounded-xl px-4 py-3.5 text-[#E8FF47] placeholder-[#333] focus:outline-none focus:border-[#E8FF47]/30 transition-all font-mono font-bold tracking-[0.5em] text-center text-2xl uppercase"
+                  />
+                </div>
+              )}
+
+              {/* Category — create only */}
+              {tab === "create" && (
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-[#555] mb-2">
+                    Category
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {CATEGORIES.map((cat) => {
+                      const isActive = selected === cat.id;
+                      return (
+                        <button
+                          key={cat.id}
+                          onClick={() => { setSelected(cat.id); setError(null); }}
+                          className="flex flex-col items-center gap-2 py-5 rounded-xl transition-all duration-200 active:scale-95"
+                          style={isActive ? {
+                            color: cat.color,
+                            backgroundColor: cat.color + "15",
+                            border: `1px solid ${cat.color}50`,
+                          } : {
+                            color: "#444",
+                            backgroundColor: "#111111",
+                            border: "1px solid #2A2A2A",
+                          }}
+                        >
+                          <span
+                            className="material-symbols-outlined"
+                            style={{
+                              fontSize: "24px",
+                              color: isActive ? cat.color : "#3A3A3A",
+                              fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0"
+                            }}
+                          >
+                            {cat.icon}
+                          </span>
+                          <span className="text-[10px] font-bold uppercase tracking-widest">
+                            {cat.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {error && (
+                <p className="text-red-400 text-xs flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[14px]">error</span>
+                  {error}
+                </p>
+              )}
+
+              <button
+                onClick={handleGo}
+                disabled={loading}
+                className="w-full bg-[#E8FF47] text-[#2D3400] font-syne font-bold py-4 rounded-xl text-sm tracking-wide transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {loading ? <Spinner /> : (
+                  <>
+                    {tab === "create" ? "Create Room" : "Join Room"}
+                    <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                  </>
+                )}
+              </button>
+
+            </div>
+          </div>
+        </section>
+
+        {/* Footer hint */}
+        <p className="text-[10px] text-[#333] text-center uppercase tracking-widest animate-fade-up-delay-3">
+          Music · Movies · Games · Books
+        </p>
+
+      </main>
     </div>
   );
 }

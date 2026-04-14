@@ -1,53 +1,66 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import type { Player, Vote } from "@/lib/types";
 import { calculateMatchPercent } from "@/lib/game";
 
 interface Props {
   players: Player[];
   votes: Vote[];
+  category?: string;
 }
 
-export default function MatchBars({ players, votes }: Props) {
-  const [animated, setAnimated] = useState(false);
+export default function MatchBars({ players, votes, category }: Props) {
+  const percent    = calculateMatchPercent(votes, players.length);
+  const voterIds   = new Set(votes.map((v) => v.player_id));
 
-  useEffect(() => {
-    const t = setTimeout(() => setAnimated(true), 100);
-    return () => clearTimeout(t);
-  }, []);
-
-  const percent = calculateMatchPercent(votes, players.length);
-  const voterIds = new Set(votes.map((v) => v.player_id));
+  // Sort by who got the most votes first (matched → not matched)
+  const sorted = [...players].sort((a, b) => {
+    const aVoted = voterIds.has(a.id) ? 1 : 0;
+    const bVoted = voterIds.has(b.id) ? 1 : 0;
+    return bVoted - aVoted;
+  });
 
   return (
-    <div className="w-full max-w-md mx-auto flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-syne font-bold text-white">Match results</h3>
-        <span className="text-accent font-bold text-xl">{percent}%</span>
+    <div className="w-full space-y-6">
+      {/* Header row */}
+      <div className="flex justify-between items-end px-1">
+        <h2 className="text-[10px] font-bold uppercase tracking-widest text-[#888888]">Round Breakdown</h2>
+        {category && (
+          <span className="text-sm font-bold text-[#E8FF47]">Category: {category}</span>
+        )}
       </div>
-      <div className="flex flex-col gap-3">
-        {players.map((player) => {
-          const matched = voterIds.has(player.id);
-          return (
-            <div key={player.id} className="flex items-center gap-3">
-              <span className="text-sm text-zinc-300 w-24 truncate">
-                {player.name}
-              </span>
-              <div className="flex-1 h-3 bg-zinc-800 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-700 ease-out ${
-                    matched ? "bg-accent" : "bg-zinc-600"
-                  }`}
-                  style={{ width: animated ? (matched ? "100%" : "15%") : "0%" }}
-                />
-              </div>
-              <span className="text-xs text-zinc-500 w-6">
-                {matched ? "✓" : "—"}
-              </span>
-            </div>
-          );
-        })}
+
+      {/* Table */}
+      <div className="bg-[#1C1B1B] rounded-lg overflow-hidden border border-[#2A2A2A]">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="border-b border-[#464834]/10">
+              <th className="py-4 px-5 text-[10px] text-[#888888] tracking-widest uppercase font-bold">Player</th>
+              <th className="py-4 px-5 text-[10px] text-[#888888] tracking-widest uppercase font-bold text-right">Match</th>
+              <th className="py-4 px-5 text-[10px] text-[#888888] tracking-widest uppercase font-bold text-right">Score</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#464834]/5">
+            {sorted.map((player) => {
+              const matched = voterIds.has(player.id);
+              return (
+                <tr key={player.id} className="hover:bg-[#2A2A2A] transition-colors">
+                  <td className="py-4 px-5 text-sm font-medium text-[#F0F0F0]">{player.name}</td>
+                  <td className="py-4 px-5 text-sm text-right font-bold" style={{ color: matched ? "#E8FF47" : "#888888" }}>
+                    {matched ? "✓ Matched" : "—"}
+                  </td>
+                  <td className="py-4 px-5 text-sm text-right text-[#F0F0F0]">{player.score}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Overall match % */}
+      <div className="flex items-center justify-between px-1">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-[#888888]">Overall Match</span>
+        <span className="font-syne text-2xl font-bold text-[#E8FF47]">{percent}%</span>
       </div>
     </div>
   );
