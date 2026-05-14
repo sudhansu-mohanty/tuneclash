@@ -31,7 +31,7 @@ export async function createRoom(
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) throw new Error(error.message);
   return data as Room;
 }
 
@@ -55,7 +55,7 @@ export async function joinRoom(
     .select()
     .single();
 
-  if (playerError) throw playerError;
+  if (playerError) throw new Error(playerError.message);
 
   return { room: room as Room, player: player as Player };
 }
@@ -75,7 +75,7 @@ export async function addEntry(
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) throw new Error(error.message);
   return data as Entry;
 }
 
@@ -92,7 +92,7 @@ export async function submitVote(
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) throw new Error(error.message);
   return data as Vote;
 }
 
@@ -107,7 +107,7 @@ export async function updateRoomStatus(
     .update({ status })
     .eq("id", roomId);
 
-  if (error) throw error;
+  if (error) throw new Error(error.message);
 }
 
 export async function setCurrentEntry(
@@ -121,7 +121,7 @@ export async function setCurrentEntry(
     .update({ current_entry_id: entryId, status: "revealed" })
     .eq("id", roomId);
 
-  if (error) throw error;
+  if (error) throw new Error(error.message);
 }
 
 export async function updatePlayerScore(
@@ -135,5 +135,5 @@ export async function updatePlayerScore(
     .update({ score: newScore })
     .eq("id", playerId);
 
-  if (error) throw error;
+  if (error) throw new Error(error.message);
 }

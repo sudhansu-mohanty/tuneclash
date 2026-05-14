@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
+import Link from "next/link";
 import { createClient, updateRoomStatus, setCurrentEntry, submitVote } from "@/lib/supabase";
 import { updateScoresAfterRound } from "@/lib/game";
 import type { Room, Player, Entry, Vote } from "@/lib/types";
@@ -78,6 +79,11 @@ export default function RoomPage() {
         async (payload) => {
           const updated = payload.new as Room;
           setRoom(updated);
+          if (updated.status === "spinning") {
+            // Re-fetch all entries so the wheel always has the full list
+            const { data: eData } = await supabase.from("entries").select().eq("room_id", updated.id).order("created_at");
+            if (eData) setEntries(eData as Entry[]);
+          }
           if (updated.current_entry_id && updated.current_entry_id !== room.current_entry_id) {
             const { data } = await supabase.from("entries").select().eq("id", updated.current_entry_id).single();
             if (data) setCurrentEntryState(data as Entry);
@@ -102,10 +108,20 @@ export default function RoomPage() {
         (payload) => { setVotes((prev) => [...prev, payload.new as Vote]); })
       .subscribe();
 
+    const entrySub = supabase
+      .channel(`entries-${room.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "entries", filter: `room_id=eq.${room.id}` },
+        async () => {
+          const { data } = await supabase.from("entries").select().eq("room_id", room.id).order("created_at");
+          setEntries((data ?? []) as Entry[]);
+        })
+      .subscribe();
+
     return () => {
       supabase.removeChannel(roomSub);
       supabase.removeChannel(playerSub);
       supabase.removeChannel(voteSub);
+      supabase.removeChannel(entrySub);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room?.id]);
@@ -177,6 +193,7 @@ export default function RoomPage() {
       <RoomLobby
         room={room}
         players={players}
+        entries={entries}
         myPlayerName={myName}
         isHost={isHost}
         onStartGame={handleStartGame}
@@ -197,7 +214,10 @@ export default function RoomPage() {
           <button onClick={() => router.push("/")} className="text-[#888888] active:scale-95 transition-transform">
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
-          <span className="font-syne font-bold tracking-tighter text-xl text-[#F0F0F0] uppercase">TuneClash</span>
+          <Link href="/" className="flex items-center gap-2">
+            <img src="/whofits.svg" alt="" aria-hidden="true" className="h-6 w-6 shrink-0" />
+            <span className="font-syne font-bold tracking-tighter text-xl text-[#F0F0F0] uppercase">WhoFits</span>
+          </Link>
         </div>
         <span className="font-mono font-bold tracking-[0.2em] text-[#888888] text-sm border border-[#464834]/20 rounded px-3 py-1">
           {room.code}

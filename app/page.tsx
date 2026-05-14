@@ -2,8 +2,29 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createRoom, joinRoom } from "@/lib/supabase";
 import { DottedSurface } from "@/components/ui/dotted-surface";
+
+function IntroOverlay({ onDone }: { onDone: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-[100] bg-[#111111] flex flex-col items-center justify-center animate-intro-exit"
+      onAnimationEnd={onDone}
+    >
+      <div className="animate-intro-word">
+        <span className="font-syne text-[4rem] sm:text-[6rem] font-bold tracking-tight text-[#F0F0F0]">
+          Who fits
+        </span>
+      </div>
+      <div className="animate-intro-sub">
+        <span className="font-syne text-[4rem] sm:text-[6rem] font-bold tracking-tight text-[#E8FF47]">
+          your taste?
+        </span>
+      </div>
+    </div>
+  );
+}
 
 const CATEGORIES = [
   { id: "music",  label: "Music",  icon: "music_note",      color: "#C97B84" },
@@ -20,6 +41,8 @@ export default function HomePage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState<string | null>(null);
+  const [showIntro, setShowIntro] = useState(true);
+  const [modal, setModal]       = useState(false);
 
   async function handleGo() {
     if (!name.trim()) return setError("Enter your name");
@@ -41,46 +64,74 @@ export default function HomePage() {
         router.push(`/room/${room.code}`);
       }
     } catch (e) {
-      setError(String(e));
+      setError(e instanceof Error ? e.message : String(e));
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-[#111111] flex flex-col">
+    <>
+      {showIntro && <IntroOverlay onDone={() => setShowIntro(false)} />}
+    <div className="min-h-screen bg-[#111111] flex flex-col animate-page-reveal">
       <DottedSurface />
 
       {/* Header */}
       <header className="fixed top-0 w-full z-50 px-6 h-16 flex items-center justify-between">
-        <span className="font-syne text-lg font-bold tracking-tighter text-[#F0F0F0] uppercase">
-          TuneClash
-        </span>
-        <span className="text-[10px] font-bold uppercase tracking-widest text-[#555] border border-[#2A2A2A] px-3 py-1.5 rounded-full">
-          Party Game
-        </span>
+        <Link href="/" className="flex items-center gap-2">
+          <img src="/whofits.svg" alt="" aria-hidden="true" className="h-6 w-6 shrink-0" />
+          <span className="font-syne text-lg font-bold tracking-tighter text-[#F0F0F0] uppercase">WhoFits</span>
+        </Link>
+        <nav className="flex items-center gap-0.5">
+          <button
+            onClick={() => setModal(true)}
+            className="text-[10px] font-bold uppercase tracking-widest text-[#555] hover:text-[#F0F0F0] transition-colors px-3 py-1.5"
+          >
+            How to Play
+          </button>
+          <span className="text-[#2A2A2A] text-xs select-none">·</span>
+          <a
+            href="https://www.sudhansumohanty.site"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[10px] font-bold uppercase tracking-widest text-[#555] hover:text-[#E8FF47] transition-colors px-3 py-1.5 flex items-center gap-1"
+          >
+            Sudhansu here!
+            <span className="material-symbols-outlined" style={{ fontSize: "11px" }}>open_in_new</span>
+          </a>
+        </nav>
       </header>
 
-      <main className="flex-1 pt-20 pb-16 px-6 max-w-[480px] mx-auto w-full flex flex-col gap-8">
+      <main className="flex-1 pt-20 pb-16 px-6 lg:px-16 xl:px-24 max-w-7xl mx-auto w-full">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:min-h-[calc(100vh-5rem)] gap-8 lg:gap-16 xl:gap-24 pt-8 lg:pt-0">
 
-        {/* Hero */}
-        <section className="pt-8 animate-fade-up">
-          <div className="inline-flex items-center gap-2 mb-5 px-3 py-1.5 rounded-full border border-[#2A2A2A] bg-[#1C1B1B]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#7AAE8C]" style={{ animation: "pulse-dot 2s infinite" }} />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#888888]">
-              No account needed
-            </span>
-          </div>
-
-          <h1 className="font-syne text-[3.75rem] sm:text-[5rem] leading-[0.88] font-bold tracking-tight">
+        {/* Left — Hero */}
+        <section className="lg:flex-1 animate-fade-up space-y-6">
+          <h1 className="font-syne text-[3.75rem] sm:text-[5rem] lg:text-[7rem] xl:text-[9rem] leading-[0.88] font-bold tracking-tight">
             <span className="text-[#F0F0F0]">Your taste.</span><br />
             <span className="text-[#E8FF47]">Exposed.</span>
           </h1>
 
-          <p className="mt-5 text-[#555] text-sm leading-relaxed max-w-xs">
+          <p className="text-[#555] text-sm lg:text-base leading-relaxed max-w-xs lg:max-w-sm">
             Submit your favourite. Your friends guess whose it is.
             Score points for bluffing them.
           </p>
+
+          <div className="hidden lg:flex flex-wrap gap-2 pt-2">
+            {CATEGORIES.map((cat) => (
+              <span
+                key={cat.id}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border"
+                style={{ color: cat.color, borderColor: cat.color + "30", backgroundColor: cat.color + "10" }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: "13px" }}>{cat.icon}</span>
+                {cat.label}
+              </span>
+            ))}
+          </div>
         </section>
+
+        {/* Right — Form */}
+        <div className="lg:w-[420px] xl:w-[460px] shrink-0 flex flex-col gap-5">
 
         {/* Pill toggle */}
         <div className="animate-fade-up-delay-1">
@@ -109,7 +160,7 @@ export default function HomePage() {
         </div>
 
         {/* Form card */}
-        <section className="animate-fade-up-delay-2">
+        <section className="animate-fade-up-delay-2 lg:animate-none">
           <div
             className="rounded-2xl border border-[#2A2A2A] overflow-hidden"
             style={{ background: "#191919", borderTop: "2px solid rgba(232,255,71,0.18)" }}
@@ -219,12 +270,58 @@ export default function HomePage() {
         </section>
 
         {/* Footer hint */}
-        <p className="text-[10px] text-[#333] text-center uppercase tracking-widest animate-fade-up-delay-3">
+        <p className="text-[10px] text-[#333] text-center uppercase tracking-widest animate-fade-up-delay-3 pt-2">
           Music · Movies · Games · Books
         </p>
 
+        </div>{/* end right col */}
+        </div>{/* end flex row */}
       </main>
     </div>
+
+      {/* How to Play modal */}
+      {modal && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center p-6"
+          onClick={() => setModal(false)}
+        >
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div
+            className="relative rounded-2xl border border-[#2A2A2A] bg-[#191919] max-w-sm w-full p-6 animate-fade-up"
+            style={{ borderTop: "2px solid rgba(232,255,71,0.18)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setModal(false)}
+              className="absolute top-4 right-4 text-[#555] hover:text-[#F0F0F0] transition-colors"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>close</span>
+            </button>
+            <div className="space-y-4">
+              <h2 className="font-syne font-bold text-xl text-[#F0F0F0]">How to Play</h2>
+              <div className="space-y-3">
+                {[
+                  ["create_new_folder", "Create a room",    "Choose a category, enter your name, hit Create Room. Share the 4-letter code with friends."],
+                  ["group_add",         "Everyone joins",   "Friends open the app, enter the code and a display name — no account needed."],
+                  ["library_music",     "Submit your pick", "Each player types their favourite title. Keep it secret until the reveal!"],
+                  ["casino",            "Spin the wheel",   "Host hits Start. The roulette spins and lands on a random pick."],
+                  ["how_to_vote",       "Vote",             "The pick is revealed anonymously. Tap vote if you share that taste — each vote earns 1 point."],
+                  ["leaderboard",       "Leaderboard",      "After all picks are spun the player with the most connections wins."],
+                ].map(([icon, title, desc]) => (
+                  <div key={icon} className="flex gap-3">
+                    <span className="material-symbols-outlined text-[#E8FF47] shrink-0" style={{ fontSize: "18px", marginTop: "1px" }}>{icon}</span>
+                    <div>
+                      <p className="text-xs font-bold text-[#F0F0F0] uppercase tracking-widest mb-0.5">{title}</p>
+                      <p className="text-xs text-[#666] leading-relaxed">{desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Player, Room } from "@/lib/types";
+import Link from "next/link";
+import type { Entry, Player, Room } from "@/lib/types";
 import BottomNav from "./BottomNav";
 
 interface Props {
   room: Room;
   players: Player[];
+  entries: Entry[];
   myPlayerName: string;
   isHost: boolean;
   onStartGame: () => void;
@@ -21,7 +23,7 @@ function avatarColor(name: string): string {
   return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 }
 
-export default function RoomLobby({ room, players, myPlayerName, isHost, onStartGame, starting }: Props) {
+export default function RoomLobby({ room, players, entries, myPlayerName, isHost, onStartGame, starting }: Props) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
 
@@ -37,7 +39,10 @@ export default function RoomLobby({ room, players, myPlayerName, isHost, onStart
 
       {/* Header */}
       <header className="fixed top-0 w-full z-50 bg-[#111111] flex justify-between items-center px-6 h-16">
-        <span className="font-syne text-lg font-bold tracking-tighter text-[#F0F0F0] uppercase">TuneClash</span>
+        <Link href="/" className="flex items-center gap-2">
+          <img src="/whofits.svg" alt="" aria-hidden="true" className="h-6 w-6 shrink-0" />
+          <span className="font-syne text-lg font-bold tracking-tighter text-[#F0F0F0] uppercase">WhoFits</span>
+        </Link>
         <span
           className="text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full border"
           style={{ color: "#888888", borderColor: "#2A2A2A" }}
@@ -99,9 +104,10 @@ export default function RoomLobby({ room, players, myPlayerName, isHost, onStart
             <h3 className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#555]">In the room</h3>
             <div className="flex gap-4 overflow-x-auto pb-1">
               {players.map((player) => {
-                const isThisHost = player.name === room.host_name;
-                const isMe       = player.name === myPlayerName;
-                const color      = avatarColor(player.name);
+                const isThisHost  = player.name === room.host_name;
+                const isMe        = player.name === myPlayerName;
+                const color       = avatarColor(player.name);
+                const hasSubmitted = entries.some((e) => e.player_id === player.id);
 
                 return (
                   <div key={player.id} className="flex flex-col items-center gap-2 shrink-0">
@@ -109,12 +115,24 @@ export default function RoomLobby({ room, players, myPlayerName, isHost, onStart
                       className="w-14 h-14 rounded-full flex items-center justify-center relative"
                       style={{
                         background: color + "18",
-                        border: `2px solid ${isThisHost ? color : color + "40"}`,
+                        border: `2px solid ${hasSubmitted ? color : color + "40"}`,
                       }}
                     >
                       <span className="font-syne font-bold text-xl" style={{ color }}>
                         {player.name.charAt(0).toUpperCase()}
                       </span>
+                      {/* submitted check — bottom-left */}
+                      {hasSubmitted && (
+                        <div
+                          className="absolute -bottom-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center"
+                          style={{ background: "#7AAE8C", border: "2px solid #111111" }}
+                        >
+                          <span className="material-symbols-outlined text-[10px] text-white" style={{ fontVariationSettings: "'FILL' 1" }}>
+                            check
+                          </span>
+                        </div>
+                      )}
+                      {/* host star — bottom-right */}
                       {isThisHost && (
                         <div
                           className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center"
@@ -125,18 +143,19 @@ export default function RoomLobby({ room, players, myPlayerName, isHost, onStart
                           </span>
                         </div>
                       )}
+                      {/* "you" dot — bottom-right (only if not host) */}
                       {isMe && !isThisHost && (
                         <div
                           className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center"
                           style={{ background: "#E8FF47", border: "2px solid #111111" }}
                         >
                           <span className="material-symbols-outlined text-[10px] text-[#2D3400]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                            check
+                            person
                           </span>
                         </div>
                       )}
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#888]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: hasSubmitted ? "#7AAE8C" : "#888" }}>
                       {player.name.length > 7 ? player.name.slice(0, 7) : player.name}
                     </span>
                   </div>

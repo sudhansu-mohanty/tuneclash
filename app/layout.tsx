@@ -18,7 +18,7 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "TuneClash",
+  title: "WhoFits",
   description: "spin. guess. connect.",
 };
 

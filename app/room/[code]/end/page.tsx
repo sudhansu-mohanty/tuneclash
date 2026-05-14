@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 import Leaderboard from "@/components/Leaderboard";
 import BottomNav from "@/components/BottomNav";
@@ -59,7 +60,10 @@ export default function EndPage() {
 
       {/* Header */}
       <header className="fixed top-0 w-full z-50 bg-[#111111] flex justify-between items-center px-6 h-16">
-        <span className="font-syne text-xl font-bold tracking-tighter text-[#F0F0F0] uppercase">TuneClash</span>
+        <Link href="/" className="flex items-center gap-2">
+          <img src="/whofits.svg" alt="" aria-hidden="true" className="h-6 w-6 shrink-0" />
+          <span className="font-syne text-xl font-bold tracking-tighter text-[#F0F0F0] uppercase">WhoFits</span>
+        </Link>
         <span className="material-symbols-outlined text-[#888888]">menu</span>
       </header>
 
